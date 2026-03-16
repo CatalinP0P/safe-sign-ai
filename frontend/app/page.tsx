@@ -2,49 +2,69 @@
 import { useState } from 'react';
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState('');
-
-  const handleUpload = async () => {
-    if (!file) return setStatus('Selectează un fișier mai întâi!');
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    setStatus('Se încarcă...');
-
-    try {
-      const res = await fetch('http://localhost:8000/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      setStatus(`Succes: ${data.filename}`);
-    } catch (err) {
-      console.log(err);
-      setStatus('Eroare: Verifică dacă backend-ul rulează!');
-    }
-  };
-
   return (
-    <main className="flex flex-col items-center justify-center p-10 min-h-[60vh]">
-      <h1 className="text-3xl font-bold mb-8">SafeSign AI</h1>
+    <main className="flex h-screen bg-gray-50 text-gray-800">
+      <aside className="w-64 bg-white border-r flex flex-col p-6">
+        <h1 className="text-xl font-bold mb-10 text-blue-900">SafeSign AI</h1>
+        <nav className="space-y-6">
+          {['Dashboard', 'Documente', 'Setari', 'Log out'].map((item) => (
+            <div
+              key={item}
+              className="flex items-center gap-3 text-gray-600 hover:text-blue-600 cursor-pointer"
+            >
+              <span>📄</span> {item}
+            </div>
+          ))}
+        </nav>
+      </aside>
 
-      <div className="flex flex-col items-center gap-4 p-8 border-2 border-dashed border-gray-400 rounded-xl bg-gray-50">
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-        />
-        <button
-          onClick={handleUpload}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Încarcă Contractul
-        </button>
-      </div>
+      <section className="flex-1 p-10">
+        <div className="mb-8">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="w-96 p-3 border rounded-lg"
+          />
+        </div>
 
-      <p className="mt-6 text-lg font-mono text-gray-700">{status}</p>
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center bg-white mb-10">
+          <div className="mb-4 text-4xl">📁</div>
+          <p className="mb-4">
+            Incarca un document nou (PDF, DOCX). Trage si plaseaza sau alege
+            manual.
+          </p>
+          <button className="bg-blue-950 text-white px-6 py-2 rounded-lg">
+            Alege fisier
+          </button>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b text-gray-500">
+                <th className="pb-4">Name Document</th>
+                <th className="pb-4">Data</th>
+                <th className="pb-4">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {['Contract Prestari', 'Ciorna', 'Proces Verbal'].map(
+                (doc, i) => (
+                  <tr key={i} className="border-b last:border-0">
+                    <td className="py-4">{doc}</td>
+                    <td className="py-4">16.03.2026</td>
+                    <td className="py-4">
+                      <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs">
+                        Analizat
+                      </span>
+                    </td>
+                  </tr>
+                ),
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   );
 }
