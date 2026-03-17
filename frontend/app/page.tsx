@@ -1,50 +1,140 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Document } from './types/document'
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState('');
+  const [files, setFiles] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleUpload = async () => {
-    if (!file) return setStatus('Selectează un fișier mai întâi!');
+  const fetchFiles = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/files');
+      const data = await res.json();
+      setFiles(data.files || []);
+    } catch (err) {
+      console.error('Eroare la încărcarea fișierelor:', err);
+    }
+  };
 
+  useEffect(() => {
+    fetchFiles();
+  }, []);
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
     const formData = new FormData();
     formData.append('file', file);
 
-    setStatus('Se încarcă...');
-
     try {
-      const res = await fetch('http://localhost:8000/upload', {
+      const response = await fetch('http://localhost:8000/upload', {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
-      setStatus(`Succes: ${data.filename}`);
-    } catch (err) {
-      console.log(err);
-      setStatus('Eroare: Verifică dacă backend-ul rulează!');
+
+      if (response.ok) {
+        await fetchFiles();
+        alert('Fișier încărcat cu succes!');
+      } else {
+        alert('Eroare la încărcare.');
+      }
+    } catch (error) {
+      console.error('Eroare upload:', error);
+    } finally {
+      setLoading(false);
+      event.target.value = '';
     }
   };
 
   return (
-    <main className="flex flex-col items-center justify-center p-10 min-h-[60vh]">
-      <h1 className="text-3xl font-bold mb-8">SafeSign AI</h1>
+    <main className="flex h-screen bg-gray-50 text-gray-800">
+      <aside className="w-64 bg-white border-r flex flex-col p-6">
+        <h1 className="text-xl font-bold mb-10 text-blue-900 italic">
+          SafeSign AI
+        </h1>
+        <nav className="space-y-6">
+          {['Dashboard', 'Documente', 'Setari', 'Log out'].map((item) => (
+            <div
+              key={item}
+              className="flex items-center gap-3 text-gray-600 hover:text-blue-600 cursor-pointer"
+            >
+              {item}
+            </div>
+          ))}
+        </nav>
+      </aside>
 
-      <div className="flex flex-col items-center gap-4 p-8 border-2 border-dashed border-gray-400 rounded-xl bg-gray-50">
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-        />
-        <button
-          onClick={handleUpload}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Încarcă Contractul
-        </button>
-      </div>
+      <section className="flex-1 p-10 overflow-y-auto">
+        <div className="mb-8">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="w-96 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
-      <p className="mt-6 text-lg font-mono text-gray-700">{status}</p>
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center bg-white mb-10 transition-all hover:border-blue-400">
+          <div className="mb-4 text-4xl">📁</div>
+          <p className="mb-4 text-gray-600">
+            {loading
+              ? 'Se încarcă...'
+              : 'Incarca un document nou (PDF, DOCX). Trage si plaseaza sau alege manual.'}
+          </p>
+
+          <label className="bg-blue-950 text-white px-6 py-2 rounded-lg cursor-pointer hover:bg-blue-900 transition-colors inline-block">
+            {loading ? 'Așteaptă...' : 'Alege fisier'}
+            <input
+              type="file"
+              className="hidden"
+              onChange={handleUpload}
+              accept=".pdf,.docx"
+              disabled={loading}
+            />
+          </label>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b text-gray-400 text-sm">
+                <th className="pb-4 font-medium uppercase">Name Document</th>
+                <th className="pb-4 font-medium uppercase">Data</th>
+                <th className="pb-4 font-medium uppercase text-right">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {files.length > 0 ? (
+                files.map((file, i) => (
+                  <tr
+                    key={i}
+                    className="border-b last:border-0 hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="py-4 font-medium">{file.filename}</td>
+                    <td className="py-4 text-gray-500">
+                      {new Date().toLocaleDateString('ro-RO')}
+                    </td>
+                    <td className="py-4 text-right">
+                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
+                        Incarcat
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="py-10 text-center text-gray-400">
+                    Niciun document găsit. Încarcă primul tău fișier!
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   );
 }

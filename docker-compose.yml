@@ -19,6 +19,8 @@ services:
       - '8000:8000'
     environment:
       DATABASE_URL: postgresql://admin_user:admin_password@db:5432/knowledge_db
+      WATCHFILES_FORCE_COLORS: "true"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - db
     volumes:
@@ -27,6 +29,15 @@ services:
   # 3. Frontend (Next.js)
   frontend:
     build: ./frontend
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json
     ports:
       - '3000:3000'
     volumes:
