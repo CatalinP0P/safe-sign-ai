@@ -18,12 +18,14 @@ async def list_files(db: Session = Depends(get_db)):
     return {"files": documents}
 
 
-@router.get("/download/{filename}")
-async def download_file(filename: str):
-    file_path = os.path.join(UPLOAD_DIR, filename)
-    if os.path.exists(file_path):
-        return FileResponse(file_path, filename=filename)
-    raise HTTPException(status_code=404, detail="Fisierul nu a fost gasit")
+@router.get("/files/{file_id}")
+async def get_file_details(file_id: int, db: Session = Depends(get_db)):
+    document = db.query(models.Document).filter(models.Document.id == file_id).first()
+
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    return document
 
 
 @router.post("/upload")

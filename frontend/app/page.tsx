@@ -1,10 +1,13 @@
 'use client';
+
 import { useState, useEffect } from 'react';
-import { Document } from './types/document'
+import { useRouter } from 'next/navigation';
+import { Document } from './types/document';
 
 export default function Home() {
   const [files, setFiles] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const fetchFiles = async () => {
     try {
@@ -12,7 +15,7 @@ export default function Home() {
       const data = await res.json();
       setFiles(data.files || []);
     } catch (err) {
-      console.error('Eroare la încărcarea fișierelor:', err);
+      console.error('Error loading files:', err);
     }
   };
 
@@ -36,12 +39,12 @@ export default function Home() {
 
       if (response.ok) {
         await fetchFiles();
-        alert('Fișier încărcat cu succes!');
+        alert('File uploaded successfully!');
       } else {
-        alert('Eroare la încărcare.');
+        alert('Upload error.');
       }
     } catch (error) {
-      console.error('Eroare upload:', error);
+      console.error('Upload error:', error);
     } finally {
       setLoading(false);
       event.target.value = '';
@@ -55,7 +58,7 @@ export default function Home() {
           SafeSign AI
         </h1>
         <nav className="space-y-6">
-          {['Dashboard', 'Documente', 'Setari', 'Log out'].map((item) => (
+          {['Dashboard', 'Documents', 'Settings', 'Log out'].map((item) => (
             <div
               key={item}
               className="flex items-center gap-3 text-gray-600 hover:text-blue-600 cursor-pointer"
@@ -79,12 +82,12 @@ export default function Home() {
           <div className="mb-4 text-4xl">📁</div>
           <p className="mb-4 text-gray-600">
             {loading
-              ? 'Se încarcă...'
-              : 'Incarca un document nou (PDF, DOCX). Trage si plaseaza sau alege manual.'}
+              ? 'Loading...'
+              : 'Upload a new document (PDF, DOCX). Drag and drop or choose manually.'}
           </p>
 
           <label className="bg-blue-950 text-white px-6 py-2 rounded-lg cursor-pointer hover:bg-blue-900 transition-colors inline-block">
-            {loading ? 'Așteaptă...' : 'Alege fisier'}
+            {loading ? 'Waiting...' : 'Choose file'}
             <input
               type="file"
               className="hidden"
@@ -99,8 +102,8 @@ export default function Home() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b text-gray-400 text-sm">
-                <th className="pb-4 font-medium uppercase">Name Document</th>
-                <th className="pb-4 font-medium uppercase">Data</th>
+                <th className="pb-4 font-medium uppercase">Document Name</th>
+                <th className="pb-4 font-medium uppercase">Date</th>
                 <th className="pb-4 font-medium uppercase text-right">
                   Status
                 </th>
@@ -108,18 +111,27 @@ export default function Home() {
             </thead>
             <tbody>
               {files.length > 0 ? (
-                files.map((file, i) => (
+                files.map((file) => (
                   <tr
-                    key={i}
-                    className="border-b last:border-0 hover:bg-gray-50 transition-colors"
+                    key={file.id}
+                    onClick={() => router.push(`/documents/${file.id}`)}
+                    className="border-b last:border-0 hover:bg-blue-50 cursor-pointer transition-colors group"
                   >
-                    <td className="py-4 font-medium">{file.filename}</td>
+                    <td className="py-4 font-medium group-hover:text-blue-700">
+                      <div className="flex items-center gap-2">
+                        {file.filename}
+                      </div>
+                    </td>
                     <td className="py-4 text-gray-500">
-                      {new Date().toLocaleDateString('ro-RO')}
+                      {file.created_at 
+                        ? new Date(file.created_at).toLocaleDateString('ro-RO')
+                        : new Date().toLocaleDateString('ro-RO')}
                     </td>
                     <td className="py-4 text-right">
-                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-                        Incarcat
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        file.status === 'uploaded' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {file.status || 'Uploaded'}
                       </span>
                     </td>
                   </tr>
@@ -127,7 +139,7 @@ export default function Home() {
               ) : (
                 <tr>
                   <td colSpan={3} className="py-10 text-center text-gray-400">
-                    Niciun document găsit. Încarcă primul tău fișier!
+                    No documents found. Upload your first file!
                   </td>
                 </tr>
               )}

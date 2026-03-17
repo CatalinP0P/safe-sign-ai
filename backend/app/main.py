@@ -1,8 +1,11 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .endpoints import files
+from fastapi.staticfiles import StaticFiles
 from app.db.session import engine, Base
 from app.db import models
+from pathlib import Path
 
 Base.metadata.create_all(bind=engine)
 
@@ -28,3 +31,12 @@ app.include_router(files.router)
 @app.get("/")
 def read_root():
     return {"message": "SafeSign AI activ"}
+
+
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_DIR = BASE_DIR.parent / "uploads"
+
+if not UPLOAD_DIR.exists():
+    UPLOAD_DIR = Path("/app/uploads")
+
+app.mount("/static", StaticFiles(directory=str(UPLOAD_DIR)), name="static")
