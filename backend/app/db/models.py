@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .session import Base
@@ -23,6 +23,7 @@ class Document(Base):
     file_path = Column(String)
     status = Column(String, default="uploaded")  # uploaded, processing, analyzed
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    summary = Column(Text, nullable=True)
 
     owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="documents")
